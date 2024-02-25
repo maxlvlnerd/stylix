@@ -59,61 +59,65 @@
     # The 'home-manager' input is used to generate the documentation.
     home-manager = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-23.11";
     };
 
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
   };
 
-  outputs =
-    { nixpkgs, base16, self, ... }@inputs:
-    {
-      packages = nixpkgs.lib.genAttrs [
+  outputs = {
+    nixpkgs,
+    base16,
+    self,
+    ...
+  } @ inputs: {
+    packages =
+      nixpkgs.lib.genAttrs [
         "aarch64-darwin"
         "aarch64-linux"
         "i686-linux"
         "x86_64-darwin"
         "x86_64-linux"
       ] (
-        system:
-        let pkgs = nixpkgs.legacyPackages.${system};
+        system: let
+          pkgs = nixpkgs.legacyPackages.${system};
         in {
           docs = import ./docs {
             inherit pkgs inputs;
             inherit (nixpkgs) lib;
           };
 
-          palette-generator = pkgs.callPackage ./palette-generator { };
+          palette-generator = pkgs.callPackage ./palette-generator {};
         }
       );
 
-      nixosModules.stylix = { pkgs, ... }@args: {
-        imports = [
-          (import ./stylix/nixos inputs {
-            inherit (self.packages.${pkgs.system}) palette-generator;
-            base16 = base16.lib args;
-            homeManagerModule = self.homeManagerModules.stylix;
-          })
-        ];
-      };
-
-      homeManagerModules.stylix = { pkgs, ... }@args: {
-        imports = [
-          (import ./stylix/hm inputs {
-            inherit (self.packages.${pkgs.system}) palette-generator;
-            base16 = base16.lib args;
-          })
-        ];
-      };
-
-      darwinModules.stylix = { pkgs, ... }@args: {
-        imports = [
-          (import ./stylix/darwin inputs {
-            inherit (self.packages.${pkgs.system}) palette-generator;
-            base16 = base16.lib args;
-            homeManagerModule = self.homeManagerModules.stylix;
-          })
-        ];
-      };
+    nixosModules.stylix = {pkgs, ...} @ args: {
+      imports = [
+        (import ./stylix/nixos inputs {
+          inherit (self.packages.${pkgs.system}) palette-generator;
+          base16 = base16.lib args;
+          homeManagerModule = self.homeManagerModules.stylix;
+        })
+      ];
     };
+
+    homeManagerModules.stylix = {pkgs, ...} @ args: {
+      imports = [
+        (import ./stylix/hm inputs {
+          inherit (self.packages.${pkgs.system}) palette-generator;
+          base16 = base16.lib args;
+        })
+      ];
+    };
+
+    darwinModules.stylix = {pkgs, ...} @ args: {
+      imports = [
+        (import ./stylix/darwin inputs {
+          inherit (self.packages.${pkgs.system}) palette-generator;
+          base16 = base16.lib args;
+          homeManagerModule = self.homeManagerModules.stylix;
+        })
+      ];
+    };
+  };
 }
